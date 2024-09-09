@@ -1,5 +1,6 @@
 const fs = require("fs");
 const { PDFDocument, PDFPage } = require("pdf-lib");
+const sharp = require("sharp");
 
 async function addBackgroundToPDF(pdfPath, imagePath, outputPath) {
   const pdfBytes = fs.readFileSync(pdfPath);
@@ -8,11 +9,17 @@ async function addBackgroundToPDF(pdfPath, imagePath, outputPath) {
   const firstPage = pages[0];
   const { width, height } = firstPage.getSize();
 
-  const imageBytes = fs.readFileSync(imagePath);
-  const image = await pdfDoc.embedPng(imageBytes);
+  const image = await sharp(imagePath)
+    .resize(Math.round(width), Math.round(height), {
+      fit: "fill",
+      withoutEnlargement: true,
+    })
+    .toBuffer();
+
+  const embeddedImage = await pdfDoc.embedPng(image);
 
   const newPage = pdfDoc.addPage([width, height]);
-  newPage.drawImage(image, {
+  newPage.drawImage(embeddedImage, {
     x: 0,
     y: 0,
     width: width,
