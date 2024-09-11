@@ -8,7 +8,7 @@ function addBackgroundToPDF(pdfPath, imagePath, outputPath) {
 
   try {
     // Convert image to PDF
-    execSync(`convert "${imagePath}" "${backgroundPdf}"`);
+    execSync(`magick "${imagePath}" "${backgroundPdf}"`);
 
     // Combine background PDF with original PDF
     execSync(`pdftk "${backgroundPdf}" stamp "${pdfPath}" output "${outputPath}"`);
