@@ -12,6 +12,8 @@
   "dependencies": {
     "jspdf": "^2.5.1",
     "pdf-lib": "^1.17.1",
+    "pdf-merger-js": "^5.1.2",
+    "pdf-poppler": "^0.2.1",
     "pdfjs": "^2.5.3",
     "pdfmake": "^0.2.12",
     "sharp": "^0.33.5"

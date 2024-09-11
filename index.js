@@ -1,45 +1,24 @@
-const fs = require("fs");
-const { PDFDocument, PDFPage } = require("pdf-lib");
-const sharp = require("sharp");
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
-async function addBackgroundToPDF(pdfPath, imagePath, outputPath) {
-  const pdfBytes = fs.readFileSync(pdfPath);
-  const pdfDoc = await PDFDocument.load(pdfBytes);
-  const pages = pdfDoc.getPages();
-  const firstPage = pages[0];
-  const { width, height } = firstPage.getSize();
+function addBackgroundToPDF(pdfPath, imagePath, outputPath) {
+  const tempDir = fs.mkdtempSync('pdf-background-');
+  const backgroundPdf = path.join(tempDir, 'background.pdf');
 
-  const image = await sharp(imagePath)
-    .resize(Math.round(width), Math.round(height), {
-      fit: "fill",
-      withoutEnlargement: true,
-    })
-    .toBuffer();
+  try {
+    // Convert image to PDF
+    execSync(`convert "${imagePath}" "${backgroundPdf}"`);
 
-  const embeddedImage = await pdfDoc.embedPng(image);
+    // Combine background PDF with original PDF
+    execSync(`pdftk "${backgroundPdf}" stamp "${pdfPath}" output "${outputPath}"`);
 
-  const newPage = pdfDoc.addPage([width, height]);
-  newPage.drawImage(embeddedImage, {
-    x: 0,
-    y: 0,
-    width: width,
-    height: height,
-  });
-
-  const [embeddedPage] = await pdfDoc.embedPdf(pdfBytes, [0]);
-  newPage.drawPage(embeddedPage, {
-    x: 0,
-    y: 0,
-    width: width,
-    height: height,
-  });
-
-  pdfDoc.removePage(0);
-
-  const pdfBytesWithBackground = await pdfDoc.save();
-  fs.writeFileSync(outputPath, pdfBytesWithBackground);
+    console.log(`PDF with background saved to ${outputPath}`);
+  } finally {
+    // Clean up temporary files
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 }
 
-addBackgroundToPDF("page.pdf", "background.png", "output.pdf").catch((error) =>
-  console.error("Error:", error),
-);
+// Usage
+addBackgroundToPDF('page.pdf', 'background.png', 'output.pdf');
